@@ -792,16 +792,17 @@ func formatRangeUnified(start, stop int) string {
 
 // Unified diff parameters
 type LineDiffParams struct {
-	A        []string             // First sequence lines
-	FromFile string               // First file name
-	FromDate string               // First file time
-	B        []string             // Second sequence lines
-	ToFile   string               // Second file name
-	ToDate   string               // Second file time
-	Eol      string               // Headers end of line, defaults to LF
-	Context  int                  // Number of context lines
-	AutoJunk bool                 // If true, use autojunking
-	IsJunkLine func(string)bool   // How to spot junk lines
+	A          []string          // First sequence lines
+	FromFile   string            // First file name
+	FromDate   string            // First file time
+	B          []string          // Second sequence lines
+	ToFile     string            // Second file name
+	ToDate     string            // Second file time
+	Eol        string            // Headers end of line, defaults to LF
+	Context    int               // Number of context lines
+	AutoJunk   bool              // If true, use autojunking
+	IsJunkLine func(string) bool // How to spot junk lines
+	Colored    bool              // Colorize add and remove lines
 }
 
 // Compare two sequences of lines; generate the delta as a unified diff.
@@ -830,10 +831,6 @@ func WriteUnifiedDiff(writer io.Writer, diff LineDiffParams) error {
 	bld.Reset()
 	wf := func(format string, args ...interface{}) error {
 		_, err := fmt.Fprintf(&bld, format, args...)
-		return err
-	}
-	ws := func(s string) error {
-		_, err := bld.WriteString(s)
 		return err
 	}
 
@@ -874,11 +871,22 @@ func WriteUnifiedDiff(writer io.Writer, diff LineDiffParams) error {
 		if err := wf("@@ -%s +%s @@%s", range1, range2, diff.Eol); err != nil {
 			return err
 		}
+
+		addFormat := "+%s"
+		removeFormat := "-%s"
+		equalFormat := " %s"
+
+		if diff.Colored {
+			addFormat = "\x1b[32m+%s"    // Foreground Green
+			removeFormat = "\x1b[31m-%s" // Foreground Red
+			equalFormat = "\x1b[0m %s"   // No Color
+		}
+
 		for _, c := range g {
 			i1, i2, j1, j2 := c.I1, c.I2, c.J1, c.J2
 			if c.Tag == 'e' {
 				for _, line := range diff.A[i1:i2] {
-					if err := ws(" " + line); err != nil {
+					if err := wf(equalFormat, line); err != nil {
 						return err
 					}
 				}
@@ -886,14 +894,14 @@ func WriteUnifiedDiff(writer io.Writer, diff LineDiffParams) error {
 			}
 			if c.Tag == 'r' || c.Tag == 'd' {
 				for _, line := range diff.A[i1:i2] {
-					if err := ws("-" + line); err != nil {
+					if err := wf(removeFormat, line); err != nil {
 						return err
 					}
 				}
 			}
 			if c.Tag == 'r' || c.Tag == 'i' {
 				for _, line := range diff.B[j1:j2] {
-					if err := ws("+" + line); err != nil {
+					if err := wf(addFormat, line); err != nil {
 						return err
 					}
 				}
