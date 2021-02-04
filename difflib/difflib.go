@@ -833,10 +833,6 @@ func WriteUnifiedDiff(writer io.Writer, diff LineDiffParams) error {
 		_, err := fmt.Fprintf(&bld, format, args...)
 		return err
 	}
-	ws := func(s string) error {
-		_, err := bld.WriteString(s)
-		return err
-	}
 
 	if len(diff.Eol) == 0 {
 		diff.Eol = "\n"
