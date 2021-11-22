@@ -8,7 +8,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-	"./tester"
+
+	"github.com/mongodb-forks/go-difflib/difflib/tester"
 )
 
 func assertAlmostEqual(t *testing.T, a, b float64, places int) {
@@ -602,7 +603,7 @@ func TestGetUnifiedDiffString(t *testing.T) {
 	// Build diff
 	diff := LineDiffParams{A: SplitLines(A),
 		FromFile: "file", FromDate: "then",
-		B: SplitLines(B),
+		B:      SplitLines(B),
 		ToFile: "tile", ToDate: "now", Eol: "", Context: 1}
 	// Run test
 	diffStr, err := GetUnifiedDiffString(diff)
@@ -612,5 +613,48 @@ func TestGetUnifiedDiffString(t *testing.T) {
 	exp := "--- file\tthen\n+++ tile\tnow\n@@ -2,3 +2,3 @@\n two\n-three\n+thr33\n four\n"
 	if diffStr != exp {
 		t.Fatal("GetUnifiedDiffString failure:", diffStr)
+	}
+}
+
+func TestColoredDiffString(t *testing.T) {
+	A := "one\ntwo\nthree\nfour"
+	B := "one\ntwo\nthr33\nfour"
+
+	// Build diff
+	diff := LineDiffParams{
+		A:       SplitLines(A),
+		B:       SplitLines(B),
+		Context: 3,
+		Colored: true,
+	}
+	// string builder always returns a nil error so it's safe to ignore here
+	diffStr, err := GetUnifiedDiffString(diff)
+	if err != nil {
+		t.Fatal("Failed")
+	}
+
+	if !strings.Contains(diffStr, "\x1b[31m-three\n\x1b[0m") {
+		t.Fatal("Failed to remove removeFormat formatting")
+	}
+
+	if !strings.Contains(diffStr, "one\n") {
+		t.Fatal("Neutal Line contained color format")
+	}
+
+	// Reverse diff
+	diff = LineDiffParams{
+		A:       SplitLines(B),
+		B:       SplitLines(A),
+		Context: 3,
+		Colored: true,
+	}
+	// string builder always returns a nil error so it's safe to ignore here
+	diffStr, err = GetUnifiedDiffString(diff)
+	if err != nil {
+		t.Fatal("Failed")
+	}
+
+	if !strings.Contains(diffStr, "\x1b[32m+three\n\x1b[0m") {
+		t.Fatal("Failed to remove addFormat formatting")
 	}
 }

@@ -879,7 +879,6 @@ func WriteUnifiedDiff(writer io.Writer, diff LineDiffParams) error {
 		if diff.Colored {
 			addFormat = "\x1b[32m+%s\x1b[0m"    // Foreground Green
 			removeFormat = "\x1b[31m-%s\x1b[0m" // Foreground Red
-			equalFormat = "\x1b[0m %s"          // No Color
 		}
 
 		for _, c := range g {
