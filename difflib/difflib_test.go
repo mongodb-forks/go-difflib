@@ -615,3 +615,46 @@ func TestGetUnifiedDiffString(t *testing.T) {
 		t.Fatal("GetUnifiedDiffString failure:", diffStr)
 	}
 }
+
+func TestColoredDiffString(t *testing.T) {
+	A := "one\ntwo\nthree\nfour"
+	B := "one\ntwo\nthr33\nfour"
+
+	// Build diff
+	diff := LineDiffParams{
+		A:       SplitLines(A),
+		B:       SplitLines(B),
+		Context: 3,
+		Colored: true,
+	}
+	// string builder always returns a nil error so it's safe to ignore here
+	diffStr, err := GetUnifiedDiffString(diff)
+	if err != nil {
+		t.Fatal("Failed")
+	}
+
+	if !strings.Contains(diffStr, "\x1b[31m-three\n\x1b[0m") {
+		t.Fatal("Failed to remove removeFormat formatting")
+	}
+
+	if !strings.Contains(diffStr, "one\n") {
+		t.Fatal("Neutal Line contained color format")
+	}
+
+	// Reverse diff
+	diff = LineDiffParams{
+		A:       SplitLines(B),
+		B:       SplitLines(A),
+		Context: 3,
+		Colored: true,
+	}
+	// string builder always returns a nil error so it's safe to ignore here
+	diffStr, err = GetUnifiedDiffString(diff)
+	if err != nil {
+		t.Fatal("Failed")
+	}
+
+	if !strings.Contains(diffStr, "\x1b[32m+three\n\x1b[0m") {
+		t.Fatal("Failed to remove addFormat formatting")
+	}
+}

@@ -595,7 +595,7 @@ func (d *Differ) StructuredDump(tag byte, x []string, low int, high int) (out []
 	size := high - low
 	out = make([]DiffLine, size)
 	for i := 0; i < size; i++ {
-		out[i] = NewDiffLine(tag, x[i + low])
+		out[i] = NewDiffLine(tag, x[i+low])
 	}
 	return out
 }
@@ -877,9 +877,8 @@ func WriteUnifiedDiff(writer io.Writer, diff LineDiffParams) error {
 		equalFormat := " %s"
 
 		if diff.Colored {
-			addFormat = "\x1b[32m+%s"    // Foreground Green
-			removeFormat = "\x1b[31m-%s" // Foreground Red
-			equalFormat = "\x1b[0m %s"   // No Color
+			addFormat = "\x1b[32m+%s\x1b[0m"    // Foreground Green
+			removeFormat = "\x1b[31m-%s\x1b[0m" // Foreground Red
 		}
 
 		for _, c := range g {
